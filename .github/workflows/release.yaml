@@ -11,6 +11,9 @@ on:
         required: true
         default: 'v0.0.1'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -48,5 +51,3 @@ jobs:
         with:
           files: release/mimismart-artylic-${{ github.ref_name }}.tar.gz
           generate_release_notes: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
