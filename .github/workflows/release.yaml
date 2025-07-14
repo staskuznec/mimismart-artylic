@@ -51,3 +51,5 @@ jobs:
         with:
           files: release/mimismart-artylic-${{ github.ref_name }}.tar.gz
           generate_release_notes: true
+          draft: false
+          make_latest: true
