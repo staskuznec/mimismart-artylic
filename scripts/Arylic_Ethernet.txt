@@ -1,0 +1,66 @@
+/*
+{
+  desc:"Отправка комманд на Arylic",
+  tag:"item",
+  selectArea:false,
+  vars:[
+   	{name:"DEST",type:"text",required:true,defaultValue:"1000:92",filter:"0123456789:",desc:"Адрес скрипта управления Arylic"},
+    {name:"IP",type:"text",required:true,defaultValue:"192.168.20.220",filter:"0123456789.",desc:"IP медиаточки Arylic"},
+    {name:"CHANGE_VOL",type:"list",required:true,data:{"1":"ДА","0":"НЕТ"},desc:"Нужно ли изменить громкость"},
+	{name:"VOLUME",type:"number",required:true,width:100,defaultValue:80,min:1,max:100,desc:"Громкость оповещения"},
+    {name:"SECTION",type:"list","required":true,data:{"player":"Playback - Управление плеером","network":"Networking - не реализовано","device_info":"Device Information - не реализовано"},desc:"Секция/раздел",descWidth:200},
+	{name:"COMMAND",type:"list","required":true,data:{"playURL":"Player - Проиграть URL указать в поле значение для комманды","playM3U":"Player - Проиграть M3U URL указать в поле значение для комманды","volumeUP":"Player - Увеличить громкость","volumeDown":"Player - Уменьшить громкость","setVolume":"Player - установить громкость от 0-100 указать в поле значение для комманды","play":"Player - Запуск проигрывания","stop":"Player - остановка проигрывания","resume":"Player - возобновление проигрывания","onepause":"Player - Пауза","next":"Player - следующий трек","prev":"Player - предыдущий трек","setMute":"Player - MUTE","nextSource":"Player - переключиться на следующий доступный вход","seekForward":"Player - отматать на 5 секунд вперед","seekBack":"Player - отматать на 5 секунд назад","loopmode":"Player - установка Shuffle/Repeat  0-5 описание в файле"},desc:"Команда",descWidth:200, width:1000},
+    {name:"VALUE",type:"string","required":false,width:300,filter:"QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm\\:\\/a-zA-Z0-9\\№\\;\\`\\!\\@\\#\\$\\%\\^\\&\\(\\)\\+\\=\\,\\.\\-_",min:1,desc:"Значение для комманды",descWidth:200},
+	{name:"ACT",type:"list",required:true,data:{"1":"ДА","0":"НЕТ"},desc:"Нужно ли изменить статус кнопки на OFF"},
+    {name:"PERIOD",type:"number",required:true,defaultValue:1,min:1,max:3600,desc:"Время через которое необхоимо выполнить действие в милисекуундах"},
+    {name:"ACT_OFF",type:"list",required:true,data:{"1":"ДА","0":"НЕТ"},desc:"Нужно ли отправлять комманду после выключения скрипта"},
+    {name:"SECTION_AFTER_OFF",type:"list","required":true,data:{"player":"Playback - Управление плеером","network":"Networking - не реализовано","device_info":"Device Information - не реализовано"},desc:"Секция/раздел после выключения скриптов",descWidth:200},
+    {name:"COMM_AFTER_OFF",type:"list","required":true,data:{"playURL":"Player - Проиграть URL указать в поле значение для комманды","playM3U":"Player - Проиграть M3U URL указать в поле значение для комманды","volumeUP":"Player - Увеличить громкость","volumeDown":"Player - Уменьшить громкость","setVolume":"Player - установить громкость от 0-100 указать в поле значение для комманды","play":"Player - Запуск проигрывания","stop":"Player - остановка проигрывания","resume":"Player - возобновление проигрывания","onepause":"Player - Пауза","next":"Player - следующий трек","prev":"Player - предыдущий трек","setMute":"Player - MUTE","nextSource":"Player - переключиться на следующий доступный вход","seekForward":"Player - отматать на 5 секунд вперед","seekBack":"Player - отматать на 5 секунд назад","loopmode":"Player - установка Shuffle/Repeat  0-5 описание в файле"},desc:"Команда",descWidth:200, width:1000},
+	{name:"VAL_AFTER_OFF",type:"string","required":false,width:300,filter:"QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm\\:\\/a-zA-Z0-9\\№\\;\\`\\!\\@\\#\\$\\%\\^\\&\\(\\)\\+\\=\\,\\.\\-_",min:1,desc:"Значение после выключения скриптов",descWidth:200},
+    ]
+}
+*/
+
+//mode	Activates a combination of Shuffle and Repeat modes
+// 0: Shuffle disabled, Repeat enabled - loop
+// 1: Shuffle disabled, Repeat enabled - loop once
+// 2: Shuffle enabled, Repeat enabled - loop
+// 3: Shuffle enabled, Repeat disabled
+// 4: Shuffle disabled, Repeat disabled
+// 5: Shuffle enabled, Repeat enabled - loop once
+
+void off() {
+    // Выключаем кнопку
+	setStatus(V-ADDR, 0);
+}
+
+V-ID/V-ADDR{
+    if(opt(0) == 1|| opt(0)== 9) {
+        if (CHANGE_VOL==1) {
+            // Устанавливаем громкость
+            setStatus(DEST, "IP|SECTION|setVolume|VOLUME");
+        }
+        #ifdef VALUE
+        // отправляем комманду
+        setStatus(DEST, "IP|SECTION|COMMAND|VALUE");
+        #else
+        // отправляем комманду без значения
+        setStatus(DEST, "IP|SECTION|COMMAND|");
+        #endif
+        cancelDelayedCall(off);
+
+        if (ACT == 1) {
+            delayedCallMs(off, PERIOD);
+        }
+    } else {
+        if (ACT_OFF == 1) {
+            #ifdef VALUE_AFTER_OFF
+            // Отправляем комманду после выключения скрипта
+            setStatus(DEST, "IP|SECTION_AFTER_OFF|COMM_AFTER_OFF|VAL_AFTER_OFF");
+            #else
+            // Отправляем комманду после выключения скрипта без значения
+            setStatus(DEST, "IP|SECTION_AFTER_OFF|COMM_AFTER_OFF|");
+            #endif
+        }
+    }
+}

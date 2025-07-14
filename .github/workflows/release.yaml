@@ -1,0 +1,52 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version'
+        required: true
+        default: 'v0.0.1'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+
+      - name: Verify and tidy dependencies
+        run: |
+          go mod tidy
+          go mod verify
+
+      - name: Build binary
+        run: |
+          mkdir -p release
+          GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go build -o release/92.sh ./cmd/crylic
+
+      - name: Copy additional files
+        run: |
+          cp scripts/Arylic_Ethernet.txt release/
+
+      - name: Create archive
+        run: |
+          cd release
+          tar -czf mimismart-artylic-${{ github.ref_name }}.tar.gz 92.sh Arylic_Ethernet.txt
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release/mimismart-artylic-${{ github.ref_name }}.tar.gz
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
